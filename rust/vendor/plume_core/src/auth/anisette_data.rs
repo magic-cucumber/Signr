@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
-use std::time::SystemTime;
+use std::time::{Duration, SystemTime};
 
 use omnisette::{AnisetteConfiguration, AnisetteHeaders, AnisetteHeadersProviderType};
 
@@ -16,6 +16,13 @@ pub enum AnisetteSource {
     /// A remote anisette-v3 server.
     RemoteV3,
 }
+
+/// How many times to ask the emulated or remote provider before giving up
+const ANISETTE_ATTEMPTS: u32 = 3;
+
+/// Pause between those attempts. A single bad reply from ani.sidestore.app
+/// used to abort the sign (RS-276)
+const ANISETTE_RETRY_DELAY: Duration = Duration::from_secs(1);
 
 /// Where the emulated-ADI library and the remote provisioning blob live.
 fn anisette_config_path() -> PathBuf {
@@ -45,12 +52,22 @@ impl AnisetteData {
             Err(_) => log::warn!("native anisette panicked, falling back"),
         }
 
+        // Tiers 2 and 3. Each attempt builds a fresh provider. Native stays a
+        // single shot: its failure on macOS 27 is deterministic
+        retry_anisette(
+            ANISETTE_ATTEMPTS,
+            ANISETTE_RETRY_DELAY,
+            Self::fetch_fallback,
+        )
+        .await
+    }
+
+    /// Emulated ADI when `libstoreservicescore.so` is provisioned, otherwise remote v3
+    async fn fetch_fallback() -> Result<Self, Error> {
         let config = AnisetteConfiguration::new()
             .set_configuration_path(anisette_config_path())
             .set_macos_serial(native_anisette::machine_serial().unwrap_or_else(|| "0".to_string()));
 
-        // Tiers 2 and 3: omnisette picks the emulated ADI when the Android library has been
-        // provisioned locally, otherwise a remote anisette-v3 server.
         let mut res = AnisetteHeaders::get_anisette_headers_provider(config)?;
         let source = match &res.provider_type {
             AnisetteHeadersProviderType::Local => AnisetteSource::EmulatedAdi,
@@ -150,6 +167,27 @@ impl AnisetteData {
     }
 }
 
+/// Call `op` up to `attempts` times. Sleep `delay` between failures. The last
+/// error is returned as-is, so a real outage still shows up after the retries
+async fn retry_anisette<T, F, Fut>(attempts: u32, delay: Duration, mut op: F) -> Result<T, Error>
+where
+    F: FnMut() -> Fut,
+    Fut: std::future::Future<Output = Result<T, Error>>,
+{
+    let mut attempt = 1u32;
+    loop {
+        match op().await {
+            Ok(value) => return Ok(value),
+            Err(err) if attempt >= attempts => return Err(err),
+            Err(err) => {
+                log::warn!("anisette attempt {attempt}/{attempts} failed ({err}), retrying");
+                tokio::time::sleep(delay).await;
+                attempt += 1;
+            }
+        }
+    }
+}
+
 /// The agent identity Apple's GSA edge accepts. Anything naming com.apple.dt.Xcode has been
 /// answered with HTTP 503 since Sept 2026, and providers still hand us that string.
 const AGENT: &str = "com.apple.AuthKit/1 (com.apple.akd/1.0)";
@@ -242,5 +280,46 @@ mod tests {
     fn config_path_is_under_app_support() {
         let p = anisette_config_path();
         assert!(p.ends_with("Signr/anisette"), "unexpected path {p:?}");
+    }
+
+    // RS-276: a decode failure from ani.sidestore.app must be retried, and the
+    // sign only stops once the last attempt fails with that same error
+    #[tokio::test]
+    async fn retries_until_anisette_succeeds() {
+        let calls = std::sync::atomic::AtomicU32::new(0);
+        let got = retry_anisette(3, Duration::ZERO, || {
+            let n = calls.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+            async move { if n < 2 { Err(Error::Parse) } else { Ok(n) } }
+        })
+        .await
+        .unwrap();
+        assert_eq!(got, 2);
+        assert_eq!(calls.load(std::sync::atomic::Ordering::SeqCst), 3);
+    }
+
+    #[tokio::test]
+    async fn stops_after_the_last_anisette_failure() {
+        let calls = std::sync::atomic::AtomicU32::new(0);
+        let err = retry_anisette(3, Duration::ZERO, || {
+            calls.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+            async { Err::<(), _>(Error::Parse) }
+        })
+        .await
+        .unwrap_err();
+        assert!(matches!(err, Error::Parse));
+        assert_eq!(calls.load(std::sync::atomic::Ordering::SeqCst), 3);
+    }
+
+    #[tokio::test]
+    async fn does_not_retry_after_success() {
+        let calls = std::sync::atomic::AtomicU32::new(0);
+        let got = retry_anisette(3, Duration::ZERO, || {
+            calls.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+            async { Ok::<_, Error>(1) }
+        })
+        .await
+        .unwrap();
+        assert_eq!(got, 1);
+        assert_eq!(calls.load(std::sync::atomic::Ordering::SeqCst), 1);
     }
 }
