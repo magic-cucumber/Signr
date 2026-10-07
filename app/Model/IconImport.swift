@@ -13,8 +13,8 @@ enum IconImport {
         case iconRenderFailed
         var errorDescription: String? {
             switch self {
-            case .unreadable: "Could not read the selected image"
-            case .iconRenderFailed: "Could not render the .icon file — export a 1024×1024 PNG instead"
+            case .unreadable: String(localized: "Could not read the selected image")
+            case .iconRenderFailed: String(localized: "Could not render the .icon file, export a 1024×1024 PNG instead")
             }
         }
     }

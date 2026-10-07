@@ -68,15 +68,15 @@ struct Pill: View {
 extension SignStage {
     var title: String {
         switch self {
-        case .preparing: "Preparing"
-        case .authenticating: "Authenticating"
-        case .registeringDevice: "Registering device"
-        case .creatingCertificate: "Creating certificate"
-        case .registeringApp: "Registering app"
-        case .modifying: "Applying options"
-        case .signing: "Signing"
-        case .installing: "Installing"
-        case .done: "Done"
+        case .preparing: String(localized: "Preparing")
+        case .authenticating: String(localized: "Authenticating")
+        case .registeringDevice: String(localized: "Registering device")
+        case .creatingCertificate: String(localized: "Creating certificate")
+        case .registeringApp: String(localized: "Registering app")
+        case .modifying: String(localized: "Applying options")
+        case .signing: String(localized: "Signing")
+        case .installing: String(localized: "Installing")
+        case .done: String(localized: "Done")
         }
     }
 }

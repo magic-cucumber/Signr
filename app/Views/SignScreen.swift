@@ -54,25 +54,25 @@ struct SignScreen: View {
         Group {
             if model.isSignedIn { content } else { signedOutState }
         }
-        .navigationTitle("Sign & Install")
+        .navigationTitle(String(localized: "Sign & Install"))
         .toolbarTitleDisplayMode(.inline)
         .toolbar {
             if model.isSignedIn {
                 ToolbarItemGroup(placement: .primaryAction) {
                     loadMenu
                     Button { startSavePreset() } label: {
-                        Label("Save", systemImage: "document.badge.plus")
+                        Label(String(localized: "Save"), systemImage: "document.badge.plus")
                     }
-                    .help("Save the current configuration as a session")
+                    .help(String(localized: "Save the current configuration as a session"))
                 }
             }
         }
-        .alert("Save session", isPresented: $showSavePrompt) {
-            TextField("Session name", text: $presetName)
-            Button("Save") { confirmSavePreset() }
-            Button("Cancel", role: .cancel) { }
+        .alert(String(localized: "Save session"), isPresented: $showSavePrompt) {
+            TextField(String(localized: "Session name"), text: $presetName)
+            Button(String(localized: "Save")) { confirmSavePreset() }
+            Button(String(localized: "Cancel"), role: .cancel) { }
         } message: {
-            Text("Stores the IPA, icon, tweaks, names and options under a name you can reload")
+            Text(String(localized: "Stores the IPA, icon, tweaks, names and options under a name you can reload"))
         }
     }
 
@@ -80,24 +80,24 @@ struct SignScreen: View {
     private var loadMenu: some View {
         Menu {
             if model.presets.isEmpty {
-                Text("No saved sessions")
+                Text(String(localized: "No saved sessions"))
             } else {
                 ForEach(model.presets) { preset in
                     Button(preset.name) { applyPreset(preset) }
                 }
                 Divider()
-                Menu("Delete") {
+                Menu(String(localized: "Delete")) {
                     ForEach(model.presets) { preset in
                         Button(preset.name, role: .destructive) { model.deletePreset(preset.id) }
                     }
                 }
             }
         } label: {
-            Label("Load", systemImage: "text.document")
+            Label(String(localized: "Load"), systemImage: "text.document")
         }
         // A Menu adopts the accent color by default; match the plain Save button's label color.
         .tint(.primary)
-        .help("Load a saved session")
+        .help(String(localized: "Load a saved session"))
     }
 
     private var content: some View {
@@ -142,10 +142,10 @@ struct SignScreen: View {
         HStack(spacing: 14) {
             iconWell
             VStack(alignment: .leading, spacing: 4) {
-                Text(ipaInfo?.name ?? ipaURL?.lastPathComponent ?? "Choose an .ipa")
+                Text(ipaInfo?.name ?? ipaURL?.lastPathComponent ?? String(localized: "Choose an .ipa"))
                     .font(.headline).lineLimit(1)
                 if ipaURL == nil {
-                    Text("Click to browse, or drag an IPA here")
+                    Text(String(localized: "Click to browse, or drag an IPA here"))
                         .font(.caption).foregroundStyle(.secondary)
                 } else if let info = ipaInfo {
                     HStack(spacing: 6) {
@@ -169,7 +169,7 @@ struct SignScreen: View {
                         .font(.title3).foregroundStyle(.tertiary)
                 }
                 .buttonStyle(.plain)
-                .help("Remove the IPA")
+                .help(String(localized: "Remove the IPA"))
             }
         }
         .padding(13)
@@ -214,7 +214,7 @@ struct SignScreen: View {
                 .buttonStyle(.plain)
                 .disabled(iconImporting)
                 .onHover { iconHovering = $0 }
-                .help(customIconImage == nil ? "Replace the app icon" : "Custom icon — click to change")
+                .help(customIconImage == nil ? String(localized: "Replace the app icon") : String(localized: "Custom icon, click to change"))
                 .overlay(alignment: .bottomTrailing) {
                     // Revert badge sits on the icon, overlaid on (not nested in) the replace button so
                     // its own tap wins. Shown only once a custom icon is set
@@ -227,7 +227,7 @@ struct SignScreen: View {
                         }
                         .buttonStyle(.plain)
                         .offset(x: 4, y: 4)
-                        .help("Revert to the original icon")
+                        .help(String(localized: "Revert to the original icon"))
                     }
                 }
                 .dropDestination(for: URL.self) { urls, _ in
@@ -285,30 +285,30 @@ struct SignScreen: View {
     private var isFreeTier: Bool { model.account?.tier == "Free" }
 
     private var optionsCard: some View {
-        Card("App options", systemImage: "slider.horizontal.3") {
-            labeledField("Bundle Identifier",
-                         ipaInfo?.bundleId ?? "keep original", text: $bundleID)
-            labeledField("Display Name", ipaInfo?.name ?? "keep original", text: $displayName)
-            labeledField("Version", ipaInfo?.version ?? "keep original", text: $version)
+        Card(String(localized: "App options"), systemImage: "slider.horizontal.3") {
+            labeledField(String(localized: "Bundle Identifier"),
+                         ipaInfo?.bundleId ?? String(localized: "keep original"), text: $bundleID)
+            labeledField(String(localized: "Display Name"), ipaInfo?.name ?? String(localized: "keep original"), text: $displayName)
+            labeledField(String(localized: "Version"), ipaInfo?.version ?? String(localized: "keep original"), text: $version)
             if !isFreeTier {
                 Divider().padding(.vertical, 2)
-                featureToggle("Wildcard App ID", "asterisk", $wildcardAppId,
-                              subtitle: "No App ID registered in your dev account")
+                featureToggle(String(localized: "Wildcard App ID"), "asterisk", $wildcardAppId,
+                              subtitle: String(localized: "No App ID registered in your dev account"))
             }
         }
         .disabled(ipaURL == nil)
     }
 
     private var consoleCard: some View {
-        Card("Console", systemImage: "terminal", fill: true, accessory: {
+        Card(String(localized: "Console"), systemImage: "terminal", fill: true, accessory: {
             Button { model.log.removeAll() } label: {
-                Label("Clear", systemImage: "trash").font(.caption)
+                Label(String(localized: "Clear"), systemImage: "trash").font(.caption)
             }
             .buttonStyle(.borderless)
             .disabled(model.log.isEmpty)
         }) {
             if model.log.isEmpty {
-                Text("Live output appears here while signing and installing.")
+                Text(String(localized: "Live output appears here while signing and installing"))
                     .font(.caption).foregroundStyle(.tertiary)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                     .multilineTextAlignment(.center)
@@ -358,32 +358,32 @@ struct SignScreen: View {
     // MARK: Tweaks & toggles
 
     private var tweaksCard: some View {
-        Card("Tweaks & options", systemImage: "wand.and.stars", fill: true, accessory: {
+        Card(String(localized: "Tweaks & options"), systemImage: "wand.and.stars", fill: true, accessory: {
             Button { activeImporter = .tweak } label: {
-                Label("Add", systemImage: "plus").font(.caption)
+                Label(String(localized: "Add"), systemImage: "plus").font(.caption)
             }
             .buttonStyle(.borderless)
         }) {
             tweakList
             Divider().padding(.vertical, 2)
-            toggleGroup("Tweak runtime") {
-                featureToggle("ElleKit runtime", "wand.and.stars", $ellekit,
-                              subtitle: "Substrate-compatible, hosts injected tweaks")
+            toggleGroup(String(localized: "Tweak runtime")) {
+                featureToggle(String(localized: "ElleKit runtime"), "wand.and.stars", $ellekit,
+                              subtitle: String(localized: "Substrate-compatible, hosts injected tweaks"))
                     .disabled(true)
-                featureToggle("Sideload bypass", "eye.slash", $sideloadBypass,
-                              subtitle: "Hides sideloading dylibs and the rest of the changes from apps")
+                featureToggle(String(localized: "Sideload bypass"), "eye.slash", $sideloadBypass,
+                              subtitle: String(localized: "Hides sideloading dylibs and the rest of the changes from apps"))
             }
-            toggleGroup("Capabilities") {
-                featureToggle("Drop all extensions, widgets & watch app", "app.dashed", $mainBinaryOnly)
-                featureToggle("File sharing (Files app)", "folder", $fileSharing)
-                featureToggle("iPad fullscreen", "ipad.landscape", $ipadFullscreen)
-                featureToggle("ProMotion (120 Hz)", "speedometer", $proMotion)
-                featureToggle("Game mode", "gamecontroller", $gameMode)
-                featureToggle("Liquid Glass", "circle.hexagongrid.fill", $liquidGlass)
-                featureToggle("Increased memory limit", "memorychip", $increasedMemoryLimit)
-                featureToggle("Lower minimum iOS", "arrow.down.to.line.compact", $lowerMinOS)
-                featureToggle("Remove device restrictions", "iphone.slash", $removeDeviceRestrictions)
-                featureToggle("Remove URL schemes", "link", $removeURLSchemes)
+            toggleGroup(String(localized: "Capabilities")) {
+                featureToggle(String(localized: "Drop all extensions, widgets & watch app"), "app.dashed", $mainBinaryOnly)
+                featureToggle(String(localized: "File sharing (Files app)"), "folder", $fileSharing)
+                featureToggle(String(localized: "iPad fullscreen"), "ipad.landscape", $ipadFullscreen)
+                featureToggle(String(localized: "ProMotion (120 Hz)"), "speedometer", $proMotion)
+                featureToggle(String(localized: "Game mode"), "gamecontroller", $gameMode)
+                featureToggle(String(localized: "Liquid Glass"), "circle.hexagongrid.fill", $liquidGlass)
+                featureToggle(String(localized: "Increased memory limit"), "memorychip", $increasedMemoryLimit)
+                featureToggle(String(localized: "Lower minimum iOS"), "arrow.down.to.line.compact", $lowerMinOS)
+                featureToggle(String(localized: "Remove device restrictions"), "iphone.slash", $removeDeviceRestrictions)
+                featureToggle(String(localized: "Remove URL schemes"), "link", $removeURLSchemes)
             }
         }
         // ElleKit is auto-managed: on when a tweak is present or bypass is enabled (bypass
@@ -424,7 +424,7 @@ struct SignScreen: View {
     private var tweakList: some View {
         VStack(alignment: .leading, spacing: 8) {
             if tweaks.isEmpty {
-                Text("Drag files here, or click Add  ·  .dylib .deb .framework .bundle .appex")
+                Text(String(localized: "Drag files here, or click Add  ·  .dylib .deb .framework .bundle .appex"))
                     .font(.caption2).foregroundStyle(.tertiary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 8)
@@ -475,7 +475,7 @@ struct SignScreen: View {
     private func resultBanner(_ signed: SignedApp) -> some View {
         Label {
             VStack(alignment: .leading, spacing: 2) {
-                Text(signed.outputPath == nil ? "Installed successfully" : "Exported signed IPA")
+                Text(signed.outputPath == nil ? String(localized: "Installed successfully") : String(localized: "Exported signed IPA"))
                     .font(.callout.weight(.medium))
                 if let out = signed.outputPath {
                     Text(out).font(.caption2.monospaced()).foregroundStyle(.secondary).lineLimit(1)
@@ -501,11 +501,11 @@ struct SignScreen: View {
                 ProgressView(value: model.progress).frame(width: 180)
                     .animation(.easeOut(duration: 0.6), value: model.progress)
                 Text(model.isCancelling
-                     ? "Cancelling…"
-                     : "\(model.stage?.title ?? "Working") · \(Int(model.progress * 100))%")
+                     ? String(localized: "Cancelling…")
+                     : String(localized: "\(model.stage?.title ?? String(localized: "Working")) · \(Int(model.progress * 100))%"))
                     .font(.caption.monospacedDigit()).foregroundStyle(.secondary).lineLimit(1)
                 Button(role: .cancel) { model.cancel() } label: {
-                    Label(model.isCancelling ? "Cancelling…" : "Cancel", systemImage: "stop.fill")
+                    Label(model.isCancelling ? String(localized: "Cancelling…") : String(localized: "Cancel"), systemImage: "stop.fill")
                 }
                 .disabled(model.isCancelling)
             } else {
@@ -516,7 +516,7 @@ struct SignScreen: View {
                 guard let ipa = ipaURL else { return }
                 model.signAndInstall(ipa: ipa, options: buildOptions())
             } label: {
-                Label(model.isExporting ? "Sign & Export" : "Sign & Install", systemImage: "signature")
+                Label(model.isExporting ? String(localized: "Sign & Export") : String(localized: "Sign & Install"), systemImage: "signature")
                     .frame(minWidth: 140)
             }
             .controlSize(.large)
@@ -530,24 +530,24 @@ struct SignScreen: View {
     @ViewBuilder
     private var destinationSummary: some View {
         if let device = model.selectedDevice {
-            Label("Install to \(device.name)", systemImage: device.isMac ? "macbook" : "iphone.gen3")
+            Label(String(localized: "Install to \(device.name)"), systemImage: device.isMac ? "macbook" : "iphone.gen3")
                 .font(.caption).foregroundStyle(.secondary)
         } else {
-            Label("Export a signed .ipa (no device selected)", systemImage: "square.and.arrow.up")
+            Label(String(localized: "Export a signed .ipa (no device selected)"), systemImage: "square.and.arrow.up")
                 .font(.caption).foregroundStyle(.secondary)
         }
     }
 
     private var signedOutState: some View {
         ContentUnavailableView {
-            Label("Sign in to start", systemImage: "person.badge.key")
+            Label(String(localized: "Sign in to start"), systemImage: "person.badge.key")
         } description: {
-            Text("Connect your Apple ID in the sidebar to request a certificate and sign apps.")
+            Text(String(localized: "Connect your Apple ID in the sidebar to request a certificate and sign apps"))
         } actions: {
-            Button("Sign in with Apple ID") { model.showSignIn = true }
+            Button(String(localized: "Sign in with Apple ID")) { model.showSignIn = true }
                 .buttonStyle(.borderedProminent)
         }
-        .navigationTitle("Sign & Install")
+        .navigationTitle(String(localized: "Sign & Install"))
     }
 
     // MARK: Helpers
@@ -660,7 +660,7 @@ struct SignScreen: View {
         let name = presetName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !name.isEmpty else { return }
         model.savePreset(currentPreset(named: name))
-        model.appendLog("Saved session: \(name)", .success)
+        model.appendLog(String(localized: "Saved session: \(name)"), .success)
     }
 
     private func currentPreset(named name: String) -> SignPreset {
@@ -714,7 +714,7 @@ struct SignScreen: View {
 
         let goodTweaks = p.tweakPaths.filter { fm.fileExists(atPath: $0) }
         if goodTweaks.count != p.tweakPaths.count {
-            skipped.append("\(p.tweakPaths.count - goodTweaks.count) tweak(s)")
+            skipped.append(String(localized: "Missing tweaks: \(p.tweakPaths.count - goodTweaks.count)"))
         }
         tweaks = goodTweaks.map { URL(fileURLWithPath: $0) }
 
@@ -735,15 +735,15 @@ struct SignScreen: View {
         // Custom icon, re-resolved from its source path (re-flattening a .icon if needed).
         if let iconPath = p.iconPath {
             if !fm.fileExists(atPath: iconPath) {
-                skipped.append("icon")
+                skipped.append(String(localized: "icon"))
             } else if ipaResolved {
                 setCustomIcon(URL(fileURLWithPath: iconPath))
             }
         }
 
-        model.appendLog("Loaded session: \(p.name)", .success)
+        model.appendLog(String(localized: "Loaded session: \(p.name)"), .success)
         if !skipped.isEmpty {
-            model.appendLog("Skipped missing: \(skipped.joined(separator: ", "))", .info)
+            model.appendLog(String(localized: "Skipped missing: \(skipped.joined(separator: ", "))"), .info)
         }
     }
 

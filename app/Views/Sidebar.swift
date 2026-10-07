@@ -37,7 +37,7 @@ struct Sidebar: View {
         Button { model.showActivity = true } label: {
             HStack(spacing: 9) {
                 Image(systemName: "clock.arrow.circlepath").frame(width: 20)
-                Text("History").font(.callout)
+                Text(String(localized: "History")).font(.callout)
                 Spacer()
                 if !model.history.isEmpty {
                     Text("\(model.history.count)")
@@ -61,7 +61,7 @@ struct DestinationSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("DESTINATION")
+                Text(String(localized: "DESTINATION"))
                     .font(.caption2.weight(.semibold)).foregroundStyle(.secondary)
                 Spacer()
                 Button {
@@ -74,7 +74,7 @@ struct DestinationSection: View {
                     }
                 }
                 .buttonStyle(.borderless).font(.caption)
-                .help("Refresh devices")
+                .help(String(localized: "Refresh devices"))
             }
 
             VStack(spacing: 3) {
@@ -84,12 +84,12 @@ struct DestinationSection: View {
                 if !model.devices.isEmpty {
                     Divider().padding(.vertical, 3)
                 }
-                row(id: nil, title: "Export signed .ipa",
-                    subtitle: Text("save without installing"), icon: "square.and.arrow.up")
+                row(id: nil, title: String(localized: "Export signed .ipa"),
+                    subtitle: Text(String(localized: "save without installing")), icon: "square.and.arrow.up")
             }
 
             if model.devices.isEmpty {
-                Text("Connect an iPhone or iPad over USB or WiFi — it shows up automatically.")
+                Text(String(localized: "Connect an iPhone or iPad over USB or WiFi, it shows up automatically"))
                     .font(.caption2).foregroundStyle(.tertiary)
             }
         }
@@ -99,7 +99,7 @@ struct DestinationSection: View {
     private func deviceRow(_ d: DeviceInfo) -> some View {
         HStack(spacing: 2) {
             row(id: String(d.deviceId),
-                title: d.name.isEmpty ? "iOS device" : d.name,
+                title: d.name.isEmpty ? String(localized: "iOS device") : d.name,
                 subtitle: deviceSubtitle(d),
                 icon: d.isMac ? "macbook" : "iphone.gen3")
             Button {
@@ -110,7 +110,7 @@ struct DestinationSection: View {
                     .frame(width: 26, height: 26).contentShape(.rect)
             }
             .buttonStyle(.plain)
-            .help("Trust / re-pair this device")
+            .help(String(localized: "Trust / re-pair this device"))
         }
     }
 
@@ -177,7 +177,7 @@ struct AccountCard: View {
                             .font(.caption2).foregroundStyle(.tertiary).contentShape(.rect)
                     }
                     .buttonStyle(.plain)
-                    .help(emailHidden ? "Show email" : "Hide email")
+                    .help(emailHidden ? String(localized: "Show email") : String(localized: "Hide email"))
                 }
                 HStack(spacing: 6) {
                     if !account.tier.isEmpty {
@@ -187,7 +187,7 @@ struct AccountCard: View {
                         Pill(text: account.teamId)
                     }
                     Spacer()
-                    Button("Sign out") { model.signOut() }
+                    Button(String(localized: "Sign out")) { model.signOut() }
                         .buttonStyle(.plain).font(.caption).foregroundStyle(.secondary)
                 }
             }
@@ -201,8 +201,8 @@ struct AccountCard: View {
                     Image(systemName: "person.crop.circle.badge.plus")
                         .font(.title3).foregroundStyle(Brand.tint)
                     VStack(alignment: .leading, spacing: 1) {
-                        Text("Sign in").font(.callout.weight(.medium))
-                        Text("with your Apple ID").font(.caption).foregroundStyle(.secondary)
+                        Text(String(localized: "Sign in")).font(.callout.weight(.medium))
+                        Text(String(localized: "with your Apple ID")).font(.caption).foregroundStyle(.secondary)
                     }
                     Spacer()
                 }
@@ -258,13 +258,14 @@ struct AccountCard: View {
     }
 
     private func teamLabel(_ team: Team) -> String {
-        "\(team.name) · \(team.tier) · \(team.id)"
+        "\(team.name) · \(tierLabel(team.tier)) · \(team.id)"
     }
 
     private func tierLabel(_ tier: String) -> String {
         switch tier {
-        case "Free": "Free · 7-day"
-        case "Paid": "Developer"
+        case "Free": String(localized: "Free · 7-day")
+        case "Paid": String(localized: "Developer")
+        case "Personal": String(localized: "Personal")
         default: tier
         }
     }

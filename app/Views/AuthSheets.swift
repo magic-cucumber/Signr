@@ -13,10 +13,10 @@ struct SignInSheet: View {
                 .font(.system(size: 36)).foregroundStyle(Brand.tint)
 
             if model.twoFactorPrompt {
-                Text("Two-Factor Authentication").font(.headline)
+                Text(String(localized: "Two-Factor Authentication")).font(.headline)
                 Text(model.twoFactorRequest?.method == .sms
-                     ? "Apple sent a code by SMS. Enter it below."
-                     : "Apple sent a 6-digit code to the trusted devices for this Apple ID. Enter it below.")
+                     ? String(localized: "Apple sent a code by SMS. Enter it below")
+                     : String(localized: "Apple sent a 6-digit code to the trusted devices for this Apple ID. Enter it below"))
                     .font(.caption).foregroundStyle(.secondary)
                     .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
 
@@ -34,14 +34,14 @@ struct SignInSheet: View {
 
                 if let phones = model.twoFactorRequest?.phones, !phones.isEmpty {
                     VStack(spacing: 3) {
-                        Text("Didn't get a code?").font(.caption2).foregroundStyle(.secondary)
+                        Text(String(localized: "Didn't get a code?")).font(.caption2).foregroundStyle(.secondary)
                         ForEach(phones, id: \.id) { phone in
                             Button {
                                 model.sendTwoFactorSms(phoneID: phone.id)
                             } label: {
                                 Label(phone.lastTwoDigits.isEmpty
-                                      ? "Send code via SMS"
-                                      : "Send code via SMS ••\(phone.lastTwoDigits)",
+                                      ? String(localized: "Send code via SMS")
+                                      : String(localized: "Send code via SMS ••\(phone.lastTwoDigits)"),
                                       systemImage: "message")
                                     .font(.caption)
                             }
@@ -52,25 +52,25 @@ struct SignInSheet: View {
                 }
 
                 HStack(spacing: 10) {
-                    Button("Cancel", role: .cancel) { model.cancelTwoFactor() }
+                    Button(String(localized: "Cancel"), role: .cancel) { model.cancelTwoFactor() }
                         .keyboardShortcut(.cancelAction)
                     if model.twoFactorBusy { ProgressView().controlSize(.small) }
-                    Button("Verify") { model.submitTwoFactor() }
+                    Button(String(localized: "Verify")) { model.submitTwoFactor() }
                         .buttonStyle(.borderedProminent)
                         .keyboardShortcut(.defaultAction)
                         .disabled(model.twoFactorBusy
                                   || model.twoFactorCode.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             } else {
-                Text("Sign in with your Apple ID").font(.headline)
-                Text("Signr uses your Apple ID like Xcode does — to request a certificate and provisioning profile for your apps. Your credentials are sent only to Apple.")
+                Text(String(localized: "Sign in with your Apple ID")).font(.headline)
+                Text(String(localized: "Signr uses your Apple ID like Xcode does, to request a certificate and provisioning profile for your apps. Your credentials are sent only to Apple"))
                     .font(.caption).foregroundStyle(.secondary)
                     .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
 
                 VStack(spacing: 10) {
-                    TextField("Apple ID", text: $appleID)
+                    TextField(String(localized: "Apple ID"), text: $appleID)
                         .textContentType(.username)
-                    SecureField("Password", text: $password)
+                    SecureField(String(localized: "Password"), text: $password)
                         .textContentType(.password)
                         .onSubmit(submit)
                 }
@@ -83,7 +83,7 @@ struct SignInSheet: View {
                 }
 
                 HStack {
-                    Button("Cancel") { dismiss() }
+                    Button(String(localized: "Cancel")) { dismiss() }
                         .keyboardShortcut(.cancelAction)
                     Spacer()
                     Button {
@@ -92,7 +92,7 @@ struct SignInSheet: View {
                         if model.isWorking {
                             ProgressView().controlSize(.small)
                         } else {
-                            Text("Sign In")
+                            Text(String(localized: "Sign In"))
                         }
                     }
                     .keyboardShortcut(.defaultAction)
@@ -100,7 +100,7 @@ struct SignInSheet: View {
                     .disabled(appleID.isEmpty || password.isEmpty || model.isWorking)
                 }
 
-                Text("Tip: a free Apple ID works (7-day re-sign limit).")
+                Text(String(localized: "Tip: a free Apple ID works (7-day re-sign limit)"))
                     .font(.caption2).foregroundStyle(.tertiary)
                     .multilineTextAlignment(.center)
             }

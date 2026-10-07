@@ -196,12 +196,12 @@ final class AppModel {
                 self.teams = engine.listTeams()
                 self.saveAccountCache()
                 self.showSignIn = false
-                self.appendLog("Signed in to \(account.teamName)", .success)
+                self.appendLog(String(localized: "Signed in to \(account.teamName)"), .success)
             } catch {
                 // Cancelling the 2FA sheet throws CancellationError — treat it as a quiet stop
                 // rather than surfacing the raw "(Swift.CancellationError error 1.)" string.
                 if AppModel.isCancellation(error) {
-                    self.appendLog("Sign-in cancelled", .info)
+                    self.appendLog(String(localized: "Sign-in cancelled"), .info)
                 } else {
                     self.errorMessage = error.localizedDescription
                     self.appendLog(error.localizedDescription, .error)
@@ -217,7 +217,7 @@ final class AppModel {
             account = nil
             teams = []
             saveAccountCache()
-            appendLog("Signed out", .info)
+            appendLog(String(localized: "Signed out"), .info)
         }
     }
 
@@ -227,7 +227,7 @@ final class AppModel {
             do {
                 account = try await engine.selectTeam(teamId: teamID)
                 saveAccountCache()
-                appendLog("Switched to team \(account?.teamName ?? "")", .info)
+                appendLog(String(localized: "Switched to team \(account?.teamName ?? "")"), .info)
             } catch {
                 errorMessage = error.localizedDescription
             }
@@ -308,11 +308,11 @@ final class AppModel {
         Task {
             do {
                 try await engine.pairDevice(deviceId: deviceID)
-                appendLog("Paired device — re-reading info", .success)
+                appendLog(String(localized: "Paired device, re-reading info"), .success)
                 await refreshDevices()
             } catch {
                 errorMessage = error.localizedDescription
-                appendLog("Pairing failed: \(error.localizedDescription)", .error)
+                appendLog(String(localized: "Pairing failed: \(error.localizedDescription)"), .error)
             }
         }
     }
@@ -346,14 +346,14 @@ final class AppModel {
                 // for a result they asked to abandon. Retrying just re-signs — install is idempotent.
                 if self.isCancelling {
                     self.endWork()
-                    self.appendLog("Cancelled", .info)
+                    self.appendLog(String(localized: "Cancelled"), .info)
                     return
                 }
                 self.lastSigned = signed
                 self.endWork()
                 let installed = signed.outputPath == nil
                 if installed {
-                    self.appendLog("Installed to device", .success)
+                    self.appendLog(String(localized: "Installed to device"), .success)
                 } else {
                     self.promptExportSave(for: signed)
                 }
@@ -362,14 +362,14 @@ final class AppModel {
                     bundleId: signed.bundleId,
                     target: targetName ?? "Export",
                     success: true,
-                    detail: installed ? "Installed to \(targetName ?? "device")" : "Exported signed IPA")
+                    detail: installed ? String(localized: "Installed to \(targetName ?? String(localized: "device"))") : String(localized: "Exported signed IPA"))
             } catch {
                 // A user-initiated cancel is a clean stop, not a failure: don't surface a red
                 // error banner or write a history row for it, just reset and let them retry.
                 let wasCancelled = self.isCancelling || AppModel.isCancellation(error)
                 self.endWork()
                 if wasCancelled {
-                    self.appendLog("Cancelled", .info)
+                    self.appendLog(String(localized: "Cancelled"), .info)
                 } else {
                     self.errorMessage = error.localizedDescription
                     self.appendLog(error.localizedDescription, .error)
@@ -393,13 +393,13 @@ final class AppModel {
             : "\(signed.displayName).ipa"
 
         let panel = NSSavePanel()
-        panel.title = "Save Signed IPA"
+        panel.title = String(localized: "Save Signed IPA")
         panel.nameFieldStringValue = suggested
         panel.allowedContentTypes = [UTType(filenameExtension: "ipa") ?? .data]
         panel.canCreateDirectories = true
 
         guard panel.runModal() == .OK, let dest = panel.url else {
-            appendLog("Signed IPA kept at \(tempPath)", .info)
+            appendLog(String(localized: "Signed IPA kept at \(tempPath)"), .info)
             return
         }
         do {
@@ -410,10 +410,10 @@ final class AppModel {
             try fm.copyItem(at: URL(fileURLWithPath: tempPath), to: dest)
             lastSigned = SignedApp(bundleId: signed.bundleId, displayName: signed.displayName,
                                    outputPath: dest.path(percentEncoded: false))
-            appendLog("Saved to \(dest.path(percentEncoded: false))", .success)
+            appendLog(String(localized: "Saved to \(dest.path(percentEncoded: false))"), .success)
         } catch {
             errorMessage = error.localizedDescription
-            appendLog("Save failed: \(error.localizedDescription)", .error)
+            appendLog(String(localized: "Save failed: \(error.localizedDescription)"), .error)
         }
     }
 
@@ -421,7 +421,7 @@ final class AppModel {
         guard isWorking, !isCancelling else { return }
         isCancelling = true
         engine.cancel()
-        appendLog("Cancelling…", .info)
+        appendLog(String(localized: "Cancelling…"), .info)
     }
 
     /// True for a cancel that came back through the FFI as `SignrError.Cancelled` or a Swift
@@ -543,6 +543,13 @@ struct HistoryEntry: Codable, Identifiable {
     var target: String
     var success: Bool
     var detail: String
+
+    var localizedDetail: String {
+        guard success else { return detail }
+        return target == "Export"
+            ? String(localized: "Exported signed IPA")
+            : String(localized: "Installed to \(target)")
+    }
 }
 
 /// A named, reusable sign configuration. The IPA, custom icon, and tweaks are stored as path
